@@ -11,32 +11,29 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     # AbuseIPDB API Configuration
-    abuseipdb_api_key: str = Field(..., env="ABUSEIPDB_API_KEY")
-    abuseipdb_base_url: str = Field(
-        default="https://api.abuseipdb.com/api/v2",
-        env="ABUSEIPDB_BASE_URL"
-    )
+    abuseipdb_api_key: str
+    abuseipdb_base_url: str = "https://api.abuseipdb.com/api/v2"
 
     # Request Configuration
-    max_age_days: int = Field(default=30, env="MAX_AGE_DAYS", ge=1, le=365)
-    confidence_threshold: int = Field(default=75, env="CONFIDENCE_THRESHOLD", ge=0, le=100)
-    blacklist_confidence_min: int = Field(default=90, env="BLACKLIST_CONFIDENCE_MIN", ge=0, le=100)
+    max_age_days: int = Field(default=30, ge=1, le=365)
+    confidence_threshold: int = Field(default=75, ge=0, le=100)
+    blacklist_confidence_min: int = Field(default=90, ge=0, le=100)
 
     # Rate Limiting
-    daily_quota: int = Field(default=1000, env="DAILY_QUOTA", ge=1)
-    request_timeout: int = Field(default=30, env="REQUEST_TIMEOUT", ge=5, le=300)
-    max_retries: int = Field(default=3, env="MAX_RETRIES", ge=0, le=10)
+    daily_quota: int = Field(default=1000, ge=1)
+    request_timeout: int = Field(default=30, ge=5, le=300)
+    max_retries: int = Field(default=3, ge=0, le=10)
 
     # Cache Configuration
-    cache_db_path: str = Field(default="./cache.db", env="CACHE_DB_PATH")
-    cache_default_ttl: int = Field(default=3600, env="CACHE_DEFAULT_TTL", ge=60)  # 1 hour
+    cache_db_path: str = "./cache.db"
+    cache_default_ttl: int = Field(default=3600, ge=60)  # 1 hour
 
     # Logging
-    log_level: str = Field(default="INFO", env="LOG_LEVEL")
-    log_format: str = Field(default="json", env="LOG_FORMAT")
+    log_level: str = "INFO"
+    log_format: str = "json"
 
     # Security
-    allow_private_ips: bool = Field(default=False, env="ALLOW_PRIVATE_IPS")
+    allow_private_ips: bool = False
 
     model_config = SettingsConfigDict(
         env_file=None,

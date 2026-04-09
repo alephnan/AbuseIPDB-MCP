@@ -46,18 +46,6 @@ dev = [
 mcp-abuseipdb = "mcp_abuseipdb.server:main"
 
 
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
-testpaths = ["tests"]
-addopts = "-v --tb=short"
-markers = [
-    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-    "integration: marks tests as integration tests",
-    "docker: marks tests requiring Docker",
-    "unit: marks tests as unit tests",
-    "benchmark: marks tests as performance benchmarks",
-]
-
 [tool.coverage.run]
 source = ["src/mcp_abuseipdb"]
 omit = [

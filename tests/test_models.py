@@ -1,7 +1,7 @@
 """Tests for Pydantic models."""
 
 import pytest
-from datetime import datetime
+from datetime import datetime, timezone
 from pydantic import ValidationError
 
 from mcp_abuseipdb.models import (
@@ -332,8 +332,8 @@ class TestCacheEntry:
 
     def test_cache_entry_valid(self):
         """Test valid cache entry."""
-        now = datetime.utcnow()
-        later = datetime.utcnow()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        later = datetime.now(timezone.utc).replace(tzinfo=None)
 
         entry = CacheEntry(
             key="test_key",
@@ -348,7 +348,7 @@ class TestCacheEntry:
 
     def test_cache_entry_is_expired(self):
         """Test cache entry expiration check."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         past = datetime(2023, 1, 1)
         future = datetime(2025, 1, 1)
 

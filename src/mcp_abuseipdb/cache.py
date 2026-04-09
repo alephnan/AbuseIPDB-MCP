@@ -3,7 +3,7 @@
 import json
 import sqlite3
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any, AsyncContextManager
 from contextlib import asynccontextmanager
 import asyncio
@@ -12,6 +12,11 @@ from threading import Lock
 from .models import CacheEntry
 
 logger = logging.getLogger(__name__)
+
+
+def _utcnow() -> datetime:
+    """Return a naive UTC timestamp without using deprecated APIs."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class CacheManager:
@@ -70,7 +75,7 @@ class CacheManager:
                 expires_at = datetime.fromisoformat(expires_at_str)
 
                 # Check if expired
-                if datetime.utcnow() > expires_at:
+                if _utcnow() > expires_at:
                     # Delete expired entry
                     conn.execute("DELETE FROM cache_entries WHERE key = ?", (key,))
                     conn.commit()
@@ -81,7 +86,8 @@ class CacheManager:
                 conn.close()
 
         # Run in thread pool to avoid blocking
-        return await asyncio.get_event_loop().run_in_executor(None, _get)
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(None, _get)
 
     async def set(
         self,
@@ -95,7 +101,7 @@ class CacheManager:
         if ttl is None:
             ttl = self.default_ttl
 
-        now = datetime.utcnow()
+        now = _utcnow()
         expires_at = now + timedelta(seconds=ttl)
 
         def _set():
@@ -115,7 +121,8 @@ class CacheManager:
             finally:
                 conn.close()
 
-        await asyncio.get_event_loop().run_in_executor(None, _set)
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, _set)
 
     async def delete(self, key: str) -> bool:
         """Delete a key from the cache."""
@@ -130,7 +137,8 @@ class CacheManager:
             finally:
                 conn.close()
 
-        return await asyncio.get_event_loop().run_in_executor(None, _delete)
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(None, _delete)
 
     async def cleanup_expired(self) -> int:
         """Remove expired entries from the cache."""
@@ -139,7 +147,7 @@ class CacheManager:
         def _cleanup():
             conn = sqlite3.connect(self.db_path)
             try:
-                now = datetime.utcnow().isoformat()
+                now = _utcnow().isoformat()
                 cursor = conn.execute(
                     "DELETE FROM cache_entries WHERE expires_at < ?",
                     (now,)
@@ -149,7 +157,8 @@ class CacheManager:
             finally:
                 conn.close()
 
-        return await asyncio.get_event_loop().run_in_executor(None, _cleanup)
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(None, _cleanup)
 
     async def get_cache_info(self) -> Dict[str, Any]:
         """Get cache statistics."""
@@ -161,7 +170,7 @@ class CacheManager:
                 cursor = conn.execute("SELECT COUNT(*) FROM cache_entries")
                 total_entries = cursor.fetchone()[0]
 
-                now = datetime.utcnow().isoformat()
+                now = _utcnow().isoformat()
                 cursor = conn.execute(
                     "SELECT COUNT(*) FROM cache_entries WHERE expires_at < ?",
                     (now,)
@@ -176,7 +185,8 @@ class CacheManager:
             finally:
                 conn.close()
 
-        return await asyncio.get_event_loop().run_in_executor(None, _get_info)
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(None, _get_info)
 
     def create_cache_key(self, endpoint: str, params: Dict[str, Any]) -> str:
         """Create a cache key from endpoint and parameters."""
@@ -192,13 +202,13 @@ class RateLimiter:
     def __init__(self, tokens_per_day: int):
         self.tokens_per_day = tokens_per_day
         self.tokens = tokens_per_day
-        self.last_refill = datetime.utcnow()
+        self.last_refill = _utcnow()
         self._lock = asyncio.Lock()
 
     async def acquire(self, tokens: int = 1) -> bool:
         """Try to acquire tokens. Returns True if successful."""
         async with self._lock:
-            now = datetime.utcnow()
+            now = _utcnow()
 
             # Refill tokens based on time passed
             time_passed = (now - self.last_refill).total_seconds()

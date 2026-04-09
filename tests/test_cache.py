@@ -4,7 +4,7 @@ import pytest
 import tempfile
 import os
 import asyncio
-from datetime import datetime, timedelta
+from datetime import timedelta
 from unittest.mock import patch
 
 from mcp_abuseipdb.cache import CacheManager, RateLimiter
@@ -264,7 +264,7 @@ class TestRateLimiter:
         # Mock time passing
         with patch('mcp_abuseipdb.cache.datetime') as mock_datetime:
             future_time = limiter.last_refill + timedelta(seconds=10)
-            mock_datetime.utcnow.return_value = future_time
+            mock_datetime.now.return_value = future_time
 
             # Should refill 10 tokens (1 per second for 10 seconds)
             success = await limiter.acquire(1)
@@ -284,7 +284,7 @@ class TestRateLimiter:
         # Mock a long time passing (more than a day)
         with patch('mcp_abuseipdb.cache.datetime') as mock_datetime:
             future_time = limiter.last_refill + timedelta(days=2)
-            mock_datetime.utcnow.return_value = future_time
+            mock_datetime.now.return_value = future_time
 
             # Should refill to maximum, not beyond
             success = await limiter.acquire(1)
