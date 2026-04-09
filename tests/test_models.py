@@ -6,6 +6,7 @@ from pydantic import ValidationError
 
 from mcp_abuseipdb.models import (
     IPCheckResponse,
+    BlockReportedAddress,
     BlockCheckResponse,
     BlacklistResponse,
     BlacklistEntry,
@@ -120,6 +121,21 @@ class TestIPCheckResponse:
 
 class TestBlockCheckResponse:
     """Test cases for BlockCheckResponse model."""
+
+    def test_block_reported_address_alias_handling(self):
+        """Test reported-address parsing with the newer score field."""
+        data = {
+            "ipAddress": "203.0.113.100",
+            "abuseConfidenceScore": 85,
+            "totalReports": 15,
+            "countryCode": "US",
+        }
+
+        response = BlockReportedAddress.model_validate(data)
+
+        assert response.ip_address == "203.0.113.100"
+        assert response.abuse_confidence_percentage == 85
+        assert response.total_reports == 15
 
     def test_block_check_response_valid(self):
         """Test valid block check response parsing."""

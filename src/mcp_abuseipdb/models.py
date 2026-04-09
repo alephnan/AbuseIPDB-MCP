@@ -34,6 +34,20 @@ class IPCheckResponse(BaseModel):
     model_config = {"populate_by_name": True}
 
 
+class BlockReportedAddress(BaseModel):
+    """Reported address entry returned by the block check endpoint."""
+    ip_address: str = Field(alias="ipAddress")
+    abuse_confidence_percentage: int = Field(
+        alias="abuseConfidenceScore",
+        validation_alias=AliasChoices("abuseConfidenceScore", "abuseConfidencePercentage"),
+    )
+    total_reports: int = Field(alias="totalReports")
+    country_code: Optional[str] = Field(alias="countryCode", default=None)
+    last_reported_at: Optional[datetime] = Field(alias="lastReportedAt", default=None)
+
+    model_config = {"populate_by_name": True}
+
+
 class BlockCheckResponse(BaseModel):
     """Response model for CIDR block check endpoint."""
     network_address: str = Field(alias="networkAddress")
@@ -42,7 +56,7 @@ class BlockCheckResponse(BaseModel):
     max_address: str = Field(alias="maxAddress")
     num_possible_hosts: int = Field(alias="numPossibleHosts")
     address_space_desc: str = Field(alias="addressSpaceDesc")
-    reported_address: List[Dict[str, Any]] = Field(alias="reportedAddress", default_factory=list)
+    reported_address: List[BlockReportedAddress] = Field(alias="reportedAddress", default_factory=list)
 
     model_config = {"populate_by_name": True}
 

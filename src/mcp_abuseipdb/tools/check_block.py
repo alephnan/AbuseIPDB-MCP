@@ -129,7 +129,7 @@ class CheckBlockTool:
 
             high_confidence_addresses = [
                 addr for addr in reported_addresses
-                if addr.get("abuseConfidencePercentage", 0) >= self.settings.confidence_threshold
+                if addr.abuse_confidence_percentage >= self.settings.confidence_threshold
             ]
 
             # Format response
@@ -144,7 +144,9 @@ class CheckBlockTool:
                 "address_space_description": block_response.address_space_desc,
                 "total_reported_addresses": total_reported,
                 "high_confidence_addresses": len(high_confidence_addresses),
-                "reported_addresses": reported_addresses[:20],  # Limit to first 20
+                "reported_addresses": [
+                    addr.model_dump() for addr in reported_addresses[:20]
+                ],  # Limit to first 20
             }
 
             # Create summary text
@@ -166,10 +168,10 @@ class CheckBlockTool:
             if reported_addresses:
                 summary += "\n\nTop Reported Addresses:"
                 for addr in reported_addresses[:5]:
-                    ip = addr.get("ipAddress", "Unknown")
-                    confidence = addr.get("abuseConfidencePercentage", 0)
-                    reports = addr.get("totalReports", 0)
-                    summary += f"\n  • {ip} - {confidence}% confidence ({reports} reports)"
+                    summary += (
+                        f"\n  • {addr.ip_address} - {addr.abuse_confidence_percentage}% "
+                        f"confidence ({addr.total_reports} reports)"
+                    )
 
             return CallToolResult(
                 content=[

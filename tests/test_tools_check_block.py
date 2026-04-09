@@ -209,3 +209,31 @@ class TestCheckBlockTool:
         content = result.content[0].text
         assert "⚠️" in content or "FLAGGED" in content  # Should flag high confidence IPs
         assert "203.0.113.100" in content  # High confidence IP should be mentioned
+
+    @pytest.mark.asyncio
+    async def test_execute_accepts_normalized_reported_address_fields(self, check_block_tool, mock_cache):
+        """Test normalized cached reported-address fields are handled correctly."""
+        mock_cache.get.return_value = {
+            "network_address": "203.0.113.0",
+            "netmask": "24",
+            "min_address": "203.0.113.0",
+            "max_address": "203.0.113.255",
+            "num_possible_hosts": 256,
+            "address_space_desc": "Public Address Space",
+            "reported_address": [
+                {
+                    "ip_address": "203.0.113.100",
+                    "abuse_confidence_percentage": 85,
+                    "total_reports": 15,
+                    "country_code": "US",
+                }
+            ],
+        }
+
+        result = await check_block_tool.execute({"network": "203.0.113.0/24"})
+
+        assert isinstance(result, CallToolResult)
+        assert result.isError is None or result.isError is False
+        content = result.content[0].text
+        assert "High Confidence (≥75%): 1" in content
+        assert "203.0.113.100 - 85% confidence (15 reports)" in content

@@ -41,7 +41,7 @@ jobs:
           --ignore=tests/test_integration.py \
           -v
 
-    # Codecov upload disabled due to rate limiting; re-enable when token available
+    # Codecov upload disabled due to rate limiting; 
 
   integration-test:
     runs-on: ubuntu-latest
